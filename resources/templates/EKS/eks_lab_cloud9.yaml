@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cloud 9
+
+Parameters:
+
+  Cloud9IDEInstanceType:
+    Description: The type of instance to connect to the environment
+    Type: String
+    Default: t2.medium
+
+Resources:
+
+  Cloud9IDE:
+    Type: AWS::Cloud9::EnvironmentEC2
+    Properties: 
+      Name : EKSLabIDE
+      AutomaticStopTimeMinutes: 900
+      Description: Use this to work with EKS Labs
+      InstanceType: !Ref Cloud9IDEInstanceType
+      Repositories:
+        - RepositoryUrl: https://github.com/anz-containers/eks-init-scripts
+          PathComponent: init_scripts
+
+
+Outputs:
+  Cloud9IDEId:
+    Description: ID of the development environment
+    Value: !Ref Cloud9IDE
+
+  Cloud9IDEArn:
+    Description: ARN of the development environment
+    Value: !GetAtt Cloud9IDE.Arn
+
+  Cloud9IDEName:
+    Description: The name of the environment
+    Value: !GetAtt Cloud9IDE.Name
+
+  Cloud9IDEInstanceProfileName:
+    Description: Instance profile to be assigned to Cloud9 IDE 
+    Value: !Ref Cloud9IDEInstanceProfile
+
+     

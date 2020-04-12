@@ -1,0 +1,6 @@
+.fa-download:before {
+    content: "\f019"; }
+
+.fas {
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900; }

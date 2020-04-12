@@ -1,0 +1,51 @@
+version: 0.2         
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+    commands:
+      - echo ">>> installed python 3.7"
+  pre_build:
+    commands:
+      - echo ">>> install awscli "
+      - pip3 install --upgrade --user awscli
+      - echo ">>> install kubectl"
+      - curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl 
+      - curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/latest_release/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+      - mv -v /tmp/eksctl /usr/local/bin
+      - eksctl version
+      - export PATH=$PWD/:$PATH
+
+  build:
+    commands:
+      - echo ">>> deploy stack name $STACK_NAME_EKS_LAB and Bucket Location $CFNS3LOCATION"
+      - aws cloudformation deploy --template-file 'eks_create_all.yaml' --stack-name $STACK_NAME_EKS_LAB --parameter-overrides EKSClusterName=$EKS_CLUSTER_NAME CFNS3LOCATION=$CFNS3LOCATION --capabilities CAPABILITY_IAM 
+     
+      - echo ">>> deploy complete  "
+      - CLOUD9_INSTANCE_PROFILE_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME_EKS_LAB --query 'Stacks[0].Outputs[?OutputKey==`Cloud9IDEInstanceProfileName`].OutputValue' --output text)
+      
+      - echo ">>> instance profile $CLOUD9_INSTANCE_PROFILE_NAME will be assigned to cloud9"
+      - CLOUD9_ENVIRONMENT_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME_EKS_LAB --query 'Stacks[0].Outputs[?OutputKey==`Cloud9IDEId`].OutputValue' --output text)
+      
+      - echo ">>> find instance using environment Id= $CLOUD9_ENVIRONMENT_ID"
+      - CLOUD9_INSTANCE_ID=$(aws ec2 describe-instances --filter Name=tag:aws:cloud9:environment,Values=$CLOUD9_ENVIRONMENT_ID --query Reservations[0].Instances[0].InstanceId --output text)
+      
+      - echo ">>> cloud9 instance id= $CLOUD9_INSTANCE_ID"
+      - echo ">>> assign profile $CLOUD9_INSTANCE_PROFILE_NAME to instance $CLOUD9_INSTANCE_ID"
+      - aws ec2 associate-iam-instance-profile --instance-id $CLOUD9_INSTANCE_ID --iam-instance-profile Name=$CLOUD9_INSTANCE_PROFILE_NAME
+  
+      - eksctl create cluster -f cluster.yaml
+ 
+  post_build:
+    commands: 
+      # CODEBUILD_BUILD_SUCCEEDING = 1 Set to 0 if the build is failing, or 1 if the build is succeeding.
+      - echo ">>> build status $CODEBUILD_BUILD_SUCCEEDING "
+      - |
+        if [ "$CODEBUILD_BUILD_SUCCEEDING" -eq "1" ]
+        then
+          curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "SUCCESS","Reason" : "Creation Complete", "UniqueId" : "ID1234","Data" : "Creation complete"}' $CFN_RESPONSE_URL
+        else
+          curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "FAILURE","Reason" : "Creation Failed", "UniqueId" : "ID1234","Data" : "See Codebuild logs for details"}' $CFN_RESPONSE_URL
+        fi

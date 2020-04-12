@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Nested stack to create a new VPC for EKS, Control Plane and Workers
+
+Parameters:
+
+  EKSClusterName:
+    Description: EKS Cluster Name 
+    Type: String 
+
+  # this is referenced throughout this template
+  CFNS3LOCATION:
+    Description: Bucket name to get all config files
+    Type: String
+    Default: anz-container-day-configfiles
+
+
+Resources:
+
+  # Cloud 9 and User
+  EKSLabCloud9:
+    Type: AWS::CloudFormation::Stack
+    Description: Create EKS specific VPC 
+    Properties:
+      TemplateURL: !Sub https://${CFNS3LOCATION}.s3.amazonaws.com/eks_lab_cloud9.yaml
+      TimeoutInMinutes: '60'
+      Parameters:
+        Cloud9IDEInstanceType: t3.large
+  
+  
+ 
+Outputs:
+
+  Cloud9Console:
+    Description: Link to cloud9 console
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/cloud9/ide/${EKSLabCloud9.Outputs.Cloud9IDEId}
+
+  Cloud9IDEName:
+    Description: The name of the environment
+    Value: !Sub ${EKSLabCloud9.Outputs.Cloud9IDEName}
+
+  Cloud9IDEId:
+    Description: unique ID of cloud9 environment
+    Value: !Sub ${EKSLabCloud9.Outputs.Cloud9IDEId}
+
+  Cloud9IDEInstanceProfileName:
+    Description: Instance profile to be assigned to Cloud9 IDE 
+    Value: !Sub ${EKSLabCloud9.Outputs.Cloud9IDEInstanceProfileName}
+
+
+

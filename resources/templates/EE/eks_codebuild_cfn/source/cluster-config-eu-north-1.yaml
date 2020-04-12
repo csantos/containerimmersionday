@@ -1,0 +1,44 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+#Only use these availability zones
+availabilityZones:
+  - eu-north-1a
+  - eu-north-1b
+  - eu-north-1c
+
+metadata:
+  name: EKS-Lab
+  region: eu-north-1
+  version: "1.14"
+
+cloudWatch:
+    clusterLogging:
+        enableTypes: ["*"]
+
+nodeGroups:
+  - name: ng
+    instanceType: m5.xlarge
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 4
+    privateNetworking: true
+    volumeSize: 100
+    volumeType: gp2
+    volumeEncrypted: true
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        appMesh: true
+        ebs: true
+        fsx: true
+        efs: true
+        albIngress: true
+        xRay: true
+        cloudWatch: true
