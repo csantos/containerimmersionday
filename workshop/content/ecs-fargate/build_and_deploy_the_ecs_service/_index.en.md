@@ -171,39 +171,5 @@ As with the monolith, you'll be using [Fargate](https://aws.amazon.com/fargate/)
 
 7. Once the new like service is deployed, test liking a Mysfit again by visiting the website. Check the CloudWatch logs again and make sure that the like service now shows a "Like processed." message. If you see this, you have succesfully factored out like functionality into the new microservice!
 
-8. If you have time, you can now remove the old like endpoint from the monolith now that it is no longer seeing production use.
-
-    Go back to your Cloud9 environment where you built the monolith and like service container images.
-
-    In the monolith folder, open mythicalMysfitsService.py in the Cloud9 editor and find the code that reads:
-
-    ```
-    # increment the number of likes for the provided mysfit.
-    @app.route("/mysfits/<mysfit_id>/like", methods=['POST'])
-    def likeMysfit(mysfit_id):
-        serviceResponse = mysfitsTableClient.likeMysfit(mysfit_id)
-        process_like_request()
-        flaskResponse = Response(serviceResponse)
-        flaskResponse.headers["Content-Type"] = "application/json"
-        return flaskResponse
-    ```
-    Once you find that line, you can delete it or comment it out.
-
-    *Tip: if you're not familiar with Python, you can comment out a line by adding a hash character, "#", at the beginning of the line.*
-
-9. Build, tag and push the monolith image to the monolith ECR repository.
-
-    Use the tag `nolike2` now instead of `nolike`.
-
-        docker build -t monolith-service:nolike2 .
-        docker tag monolith-service:nolike2 <ECR_REPOSITORY_URI>:nolike2
-        docker push <ECR_REPOSITORY_URI>:nolike2
-
-    If you look at the monolith repository in ECR, you'll see the pushed image tagged as `nolike2`:
-
-    ![ECR nolike image](/images/04-ecr-nolike2.png)
-
-10. Now make one last Task Definition for the monolith to refer to this new container image URI (this process should be familiar now, and you can probably see that it makes sense to leave this drudgery to a CI/CD service in production), update the monolith service to use the new Task Definition, and make sure the app still functions as before.
-
 ### Checkpoint:
 Congratulations, you've successfully rolled out the like microservice from the monolith.  If you have time, try repeating this lab to break out the adoption microservice.

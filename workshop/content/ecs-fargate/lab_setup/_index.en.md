@@ -4,19 +4,20 @@ date = 2019-10-28T15:13:26+11:00
 weight = 2
 +++
 
-For this lab, we need to switch to the other **AWS Cloud9** workspace that was created. Let's get started by launching the **AWS Cloud9** console: [AWS Cloud9 console AP-SOUTHEAST-2](https://ap-southeast-2.console.aws.amazon.com/cloud9/home?region=ap-southeast-2)
+For this lab, we will deploy a base lab environment using CloudFormation: [![Launch Mythical Mysfits Stack into Oregon with CloudFormation](/images/ecs-fargate/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=mysfits-fargate&templateURL=https://s3.amazonaws.com/mythical-mysfits-website/fargate/core.yml)
 
-1. Find the workspace named "Project-***STACK_NAME***":
 
-    ![pick-your-idea](/images/01pickidea2.png)
+Accept the defaults. **However**, before you click **Create Stack**, make sure the to fill-in the checkbox in the capabilities section
 
-    When you open the IDE, you'll be presented with a welcome screen that looks like this:
+![Capabilities Confirmation](/images/ecs-fargate/capabilities.png)
 
-    ![cloud9-welcome](/images/00-cloud9-welcome.png)
+When the CloudFormation Template completes execution, open the Cloud9 console and select the new Workspace that the teamplate just created: [AWS Cloud9 console US-WEST-2](https://us-west-2.console.aws.amazon.com/cloud9/home?region=us-west-2)
+
+![Select the right Cloud9 Workspace](/images/ecs-fargate/pickide.png)
 
 2. Clone the Mythical Mysfits Workshop Repository:
 
-    In the bottom panel of your new Cloud9 IDE, you will see a terminal command line terminal open and ready to use.  Run the following git command in the terminal to clone the necessary code to complete this tutorial:
+    Open a terminal windows in the IDE and run the following git command to clone the necessary code to complete this tutorial:
 
     ```
     $ git clone https://github.com/aws-samples/amazon-ecs-mythicalmysfits-workshop.git

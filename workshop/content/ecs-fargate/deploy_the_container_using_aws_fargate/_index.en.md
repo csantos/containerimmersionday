@@ -51,10 +51,12 @@ In this lab, you will create a task definition to serve as a foundation for depl
 
     ![Run Task](/images/02-run-task.png)
 
+    If you see an error related to **Capacity provider strategy**, click the **Switch to launch type** link below it and select **FARGATE**.
+
     Configure the following fields:
 
     * **Launch Type** - select **Fargate**
-    * **Cluster** - select your workshop cluster from the dropdown menu
+    * **Cluster** - select your **Cluster-mysfits-fargate** cluster from the dropdown menu
     * **Task Definition** - select the task definition you created from the dropdown menu
 
     In the "VPC and security groups" section, enter the following:
