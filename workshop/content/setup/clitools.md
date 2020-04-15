@@ -1,7 +1,7 @@
 ---
 title: "Install CLI Tools"
 chapter: false
-weight: 15
+weight: 14
 ---
 
 The following tools are useful for the lab exercises
@@ -12,6 +12,11 @@ Upgrade AWS CLI according to guidance in [AWS documentation](https://docs.aws.am
 
 ```
 sudo pip install --upgrade awscli && hash -r
+```
+#### Install the ECS CLI
+```
+sudo curl -so /usr/local/bin/ecs-cli https://s3.amazonaws.com/amazon-ecs-cli/ecs-cli-linux-amd64-latest
+sudo chmod +x /usr/local/bin/ecs-cli
 ```
 
 #### Install jq, envsubst (from GNU gettext utilities) and bash-completion

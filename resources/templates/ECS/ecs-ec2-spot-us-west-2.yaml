@@ -1,12 +1,14 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Environment for running ECS Deep Learning Workshop
+Description: Environment for running ECS Spot Lab
 Mappings:
   CidrMappings:
     public-subnet-1:
       CIDR: 10.0.1.0/24
     public-subnet-2:
       CIDR: 10.0.2.0/24
+    public-subnet-3:
+      CIDR: 10.0.3.0/24
     vpc:
       CIDR: 10.0.0.0/16
   ECSAmi:
@@ -55,31 +57,93 @@ Outputs:
     Description: The name of the ECR Repository
     Value:
       Ref: ecrRepository
-  ecsClusterName:
+  ClusterName:
     Description: The name of the ECS Cluster
     Value:
       Ref: ecsCluster
-  inputBucketName:
-    Description: The name of the input S3 Bucket
-    Value:
-      Ref: inputBucket
-  outputBucketName:
-    Description: The name of the output S3 Bucket
-    Value:
-      Ref: outputBucket
   spotFleetName:
     Description: The name of the Spot Fleet
     Value:
       Ref: spotFleet
-Parameters:
-  KeyName:
-    Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
-    Type: AWS::EC2::KeyPair::KeyName
-  SourceCidr:
-    Default: 0.0.0.0/0
-    Description: Optional - CIDR/IP range for instance ssh access - defaults to 0.0.0.0/0
-    Type: String
+  LoadBalancerDNS:
+    Description: The DNS for the load balancer
+    Value: !GetAtt ALBLoadBalancer.DNSName
+  ECSTaskExecutionRole:
+    Description: The ARN of the ECS role
+    Value: !GetAtt 'ecsTaskExecutionRole.Arn'
+  VpcId:
+    Description: The ID of the VPC that this stack is deployed in
+    Value: !Ref 'vpc'
+  PublicSubnetOne:
+    Description: Public subnet one
+    Value: !Ref 'publicSubnet1'
+  PublicSubnetTwo:
+    Description: Public subnet two
+    Value: !Ref 'publicSubnet2'
+  PublicSubnetThree:
+    Description: Public subnet three
+    Value: !Ref 'publicSubnet3'
+  ContainerSecurityGroup:
+    Description: A security group used to allow containers to receive traffic
+    Value: !Ref 'securityGroup'
+# Parameters:
+#   KeyName:
+#     Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
+#     Type: AWS::EC2::KeyPair::KeyName
+#   SourceCidr:
+#     Default: 0.0.0.0/0
+#     Description: Optional - CIDR/IP range for instance ssh access - defaults to 0.0.0.0/0
+#     Type: String
 Resources:
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub SecurityGroup-${AWS::StackName}
+      GroupDescription: Access to the load balancer
+      VpcId: !Ref 'vpc'
+      SecurityGroupIngress:
+          # Allow access to ALB from anywhere on the internet
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+
+  ALBLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub alb-${AWS::StackName}
+      Scheme: internet-facing
+      Type: application
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets:
+        - !Ref publicSubnet1
+        - !Ref publicSubnet2
+        - !Ref publicSubnet3
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref ALBTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref ALBLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref vpc
+      TargetType: ip
+
   attachGateway:
     DependsOn:
     - vpc
@@ -98,55 +162,11 @@ Resources:
     Type: AWS::ECR::Repository
   ecsCluster:
     Type: AWS::ECS::Cluster
-  inputBucket:
-    Type: AWS::S3::Bucket
   internetGateway:
     DependsOn:
     - vpc
     Type: AWS::EC2::InternetGateway
-  outputBucket:
-    Type: AWS::S3::Bucket
-  predictTaskDefinition:
-    Properties:
-      ContainerDefinitions:
-      - Command:
-        - DATE=`date -Iseconds` && echo "running predict_imagenet.py $IMAGEURL" && /usr/local/bin/predict_imagenet.py
-          $IMAGEURL | tee results && echo "results being written to s3://$OUTPUTBUCKET/predict_imagenet.results.$HOSTNAME.$DATE.txt"
-          && aws s3 cp results s3://$OUTPUTBUCKET/predict_imagenet.results.$HOSTNAME.$DATE.txt
-          && echo "Task complete!"
-        EntryPoint:
-        - /bin/bash
-        - -c
-        Environment:
-        - Name: IMAGEURL
-          Value: https://images-na.ssl-images-amazon.com/images/G/01/img15/pet-products/small-tiles/23695_pets_vertical_store_dogs_small_tile_8._CB312176604_.jpg
-        - Name: OUTPUTBUCKET
-          Value:
-            Ref: outputBucket
-        - Name: AWS_DEFAULT_REGION
-          Value:
-            Ref: AWS::Region
-        Image:
-          Fn::Join:
-          - ''
-          - - Ref: AWS::AccountId
-            - .dkr.ecr.
-            - Ref: AWS::Region
-            - .amazonaws.com/
-            - Ref: ecrRepository
-            - :latest
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group:
-              Ref: cloudWatchLogsGroup
-            awslogs-region:
-              Ref: AWS::Region
-            awslogs-stream-prefix: predict_imagenet
-        Memory: '2048'
-        Name: ecs-deep-learning-workshop
-        Privileged: 'true'
-    Type: AWS::ECS::TaskDefinition
+
   publicRoute:
     DependsOn:
     - publicRouteTable
@@ -231,13 +251,44 @@ Resources:
       SubnetId:
         Ref: publicSubnet2
     Type: AWS::EC2::SubnetRouteTableAssociation
+  publicSubnet3:
+    DependsOn: attachGateway
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+        - 2
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+        - CidrMappings
+        - public-subnet-3
+        - CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: Public Subnet 3
+      VpcId:
+        Ref: vpc
+    Type: AWS::EC2::Subnet
+  publicSubnet3RouteTableAssociation:
+    DependsOn:
+    - publicRouteTable
+    - publicSubnet3
+    - attachGateway
+    Properties:
+      RouteTableId:
+        Ref: publicRouteTable
+      SubnetId:
+        Ref: publicSubnet3
+    Type: AWS::EC2::SubnetRouteTableAssociation
   scalableTarget:
     DependsOn:
     - spotFleet
     - spotFleetAutoscaleRole
     Properties:
-      MaxCapacity: 1
-      MinCapacity: 1
+      MaxCapacity: 12
+      MinCapacity: 6
       ResourceId:
         Fn::Join:
         - /
@@ -272,11 +323,11 @@ Resources:
     Properties:
       GroupDescription: Spot Fleet Instance Security Group
       SecurityGroupIngress:
-      - CidrIp:
-          Ref: SourceCidr
-        FromPort: 22
-        IpProtocol: tcp
-        ToPort: 22
+      # - CidrIp:
+      #     Ref: SourceCidr
+      #   FromPort: 22
+      #   IpProtocol: tcp
+      #   ToPort: 22
       - CidrIp: 0.0.0.0/0
         FromPort: 80
         IpProtocol: tcp
@@ -308,8 +359,8 @@ Resources:
             - Ref: AWS::Region
             - AMI
           InstanceType: m4.large
-          KeyName:
-            Ref: KeyName
+#          KeyName:
+#            Ref: KeyName
           Monitoring:
             Enabled: true
           SecurityGroups:
@@ -320,6 +371,7 @@ Resources:
             - ','
             - - Ref: publicSubnet1
               - Ref: publicSubnet2
+              - Ref: publicSubnet3
           UserData:
             Fn::Base64:
               Fn::Sub: '#!/bin/bash -xe
@@ -373,8 +425,8 @@ Resources:
             - Ref: AWS::Region
             - AMI
           InstanceType: m4.xlarge
-          KeyName:
-            Ref: KeyName
+#          KeyName:
+#            Ref: KeyName
           Monitoring:
             Enabled: true
           SecurityGroups:
@@ -385,6 +437,7 @@ Resources:
             - ','
             - - Ref: publicSubnet1
               - Ref: publicSubnet2
+              - Ref: publicSubnet3
           UserData:
             Fn::Base64:
               Fn::Sub: '#!/bin/bash -xe
@@ -438,8 +491,8 @@ Resources:
             - Ref: AWS::Region
             - AMI
           InstanceType: c4.large
-          KeyName:
-            Ref: KeyName
+#          KeyName:
+#            Ref: KeyName
           Monitoring:
             Enabled: true
           SecurityGroups:
@@ -450,6 +503,7 @@ Resources:
             - ','
             - - Ref: publicSubnet1
               - Ref: publicSubnet2
+              - Ref: publicSubnet3
           UserData:
             Fn::Base64:
               Fn::Sub: '#!/bin/bash -xe
@@ -503,8 +557,8 @@ Resources:
             - Ref: AWS::Region
             - AMI
           InstanceType: c4.xlarge
-          KeyName:
-            Ref: KeyName
+#          KeyName:
+#            Ref: KeyName
           Monitoring:
             Enabled: true
           SecurityGroups:
@@ -515,6 +569,7 @@ Resources:
             - ','
             - - Ref: publicSubnet1
               - Ref: publicSubnet2
+              - Ref: publicSubnet3
           UserData:
             Fn::Base64:
               Fn::Sub: '#!/bin/bash -xe
@@ -568,8 +623,8 @@ Resources:
             - Ref: AWS::Region
             - AMI
           InstanceType: r3.large
-          KeyName:
-            Ref: KeyName
+#          KeyName:
+#            Ref: KeyName
           Monitoring:
             Enabled: true
           SecurityGroups:
@@ -580,6 +635,7 @@ Resources:
             - ','
             - - Ref: publicSubnet1
               - Ref: publicSubnet2
+              - Ref: publicSubnet3
           UserData:
             Fn::Base64:
               Fn::Sub: '#!/bin/bash -xe
@@ -633,8 +689,8 @@ Resources:
             - Ref: AWS::Region
             - AMI
           InstanceType: r3.xlarge
-          KeyName:
-            Ref: KeyName
+#          KeyName:
+#            Ref: KeyName
           Monitoring:
             Enabled: true
           SecurityGroups:
@@ -645,6 +701,7 @@ Resources:
             - ','
             - - Ref: publicSubnet1
               - Ref: publicSubnet2
+              - Ref: publicSubnet3
           UserData:
             Fn::Base64:
               Fn::Sub: '#!/bin/bash -xe
@@ -730,24 +787,6 @@ Resources:
       Policies:
       - PolicyDocument:
           Statement:
-          - Action: s3:ListBucket
-            Effect: Allow
-            Resource:
-              Fn::Join:
-              - ''
-              - - 'arn:aws:s3:::'
-                - Ref: outputBucket
-          - Action:
-            - s3:PutObject
-            - s3:GetObject
-            - s3:DeleteObject
-            Effect: Allow
-            Resource:
-              Fn::Join:
-              - ''
-              - - 'arn:aws:s3:::'
-                - Ref: outputBucket
-                - /*
           - Action:
             - ecr:DescribeRepositories
             - ecr:ListImages
@@ -770,7 +809,7 @@ Resources:
           Fn::Join:
           - '-'
           - - Ref: AWS::StackName
-            - ecs-deep-learning-workshop-role
+            - ecs-spot-lab-role
     Type: AWS::IAM::Role
   spotFleetRole:
     Properties:
@@ -784,7 +823,7 @@ Resources:
             - spotfleet.amazonaws.com
         Version: 2012-10-17
       ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
       Path: /
     Type: AWS::IAM::Role
   spotFleetWaitCondition:
@@ -808,7 +847,31 @@ Resources:
       EnableDnsSupport: true
       Tags:
       - Key: Name
-        Value: VPC for ECS Deep Learning Workshop
+        Value: VPC for ECS Spot Lab
     Type: AWS::EC2::VPC
-...
-
+    # This is a role which is used by the ECS tasks themselves.
+  ecsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: AmazonECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                # Allow the ECS Tasks to download images from ECR
+                - 'ecr:GetAuthorizationToken'
+                - 'ecr:BatchCheckLayerAvailability'
+                - 'ecr:GetDownloadUrlForLayer'
+                - 'ecr:BatchGetImage'
+                # Allow the ECS tasks to upload logs to CloudWatch
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: '*'

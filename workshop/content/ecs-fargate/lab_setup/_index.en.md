@@ -3,7 +3,7 @@ title = "Setup"
 date = 2019-10-28T15:13:26+11:00
 weight = 2
 +++
-
+ <!-- $ git clone https://github.com/aws-samples/amazon-ecs-mythicalmysfits-workshop.git -->
 For this lab, we will deploy a base lab environment using CloudFormation: [![Launch Mythical Mysfits Stack into Oregon with CloudFormation](/images/ecs-fargate/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=mysfits-fargate&templateURL=https://s3.amazonaws.com/mythical-mysfits-website/fargate/core.yml)
 
 
@@ -20,7 +20,7 @@ When the CloudFormation Template completes execution, open the Cloud9 console an
     Open a terminal windows in the IDE and run the following git command to clone the necessary code to complete this tutorial:
 
     ```
-    $ git clone https://github.com/aws-samples/amazon-ecs-mythicalmysfits-workshop.git
+    $ git clone https://github.com/trevorrobertsjr/amazon-ecs-mythicalmysfits-workshop.git
     ```
 
     After cloning the repository, you'll see that your project explorer now includes the files cloned.
