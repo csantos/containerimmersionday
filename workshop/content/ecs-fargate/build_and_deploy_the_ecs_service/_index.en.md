@@ -40,7 +40,7 @@ As with the monolith, you'll be using [Fargate](https://aws.amazon.com/fargate/)
 
 2. With this new functionality added to the monolith, rebuild the monolith docker image with a new tag, such as `nolike`, and push it to ECR just as before (It is a best practice to avoid the `latest` tag, which can be ambiguous. Instead choose a unique, descriptive name, or even better user a Git SHA and/or build ID):
 
-        cd app/monolith-service
+        cd ~/environment/amazon-ecs-mythicalmysfits-workshop/workshop-1/app/monolith-service
         docker build -t monolith-service:nolike .
         docker tag monolith-service:nolike <ECR_REPOSITORY_URI>:nolike
         docker push <ECR_REPOSITORY_URI>:nolike
@@ -55,7 +55,7 @@ As with the monolith, you'll be using [Fargate](https://aws.amazon.com/fargate/)
 
     *Note: Your URI will be unique.*
 
-        cd app/like-service
+        cd ~/environment/amazon-ecs-mythicalmysfits-workshop/workshop-1/app/like-service
         docker build -t like-service .
         docker tag like-service:latest <ECR_REPOSITORY_URI>:latest
         docker push <ECR_REPOSITORY_URI>:latest

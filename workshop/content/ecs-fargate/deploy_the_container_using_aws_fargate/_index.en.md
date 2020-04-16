@@ -39,7 +39,7 @@ In this lab, you will create a task definition to serve as a foundation for depl
 
     Verify that under "Storage and Logging", the "log driver" is set to "awslogs".
 
-    The Log configuration should look something like this:
+    The Log configuration should look something like the following image **NOTE** DO NOT change your settings to match the image:
 
     ![CloudWatch Logs integration](/images/02-awslogs.png)
 
@@ -51,7 +51,7 @@ In this lab, you will create a task definition to serve as a foundation for depl
 
     ![Run Task](/images/02-run-task.png)
 
-    If you see an error related to **Capacity provider strategy**, click the **Switch to launch type** link below it and select **FARGATE**.
+    **NOTE** If you see an error related to **Capacity provider strategy**, click the **Switch to launch type** link below it and select **FARGATE**.
 
     Configure the following fields:
 
