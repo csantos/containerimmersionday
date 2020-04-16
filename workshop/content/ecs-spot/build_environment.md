@@ -29,6 +29,6 @@ cd ~/environment/
 
 wget https://resources.containerimmersionday.com/ecs-ec2-spot-us-west-2.yaml
 
-aws cloudformation deploy --stack-name container-demo2 --template-file ecs-ec2-spot-us-west-2.yaml --capabilities CAPABILITY_IAM
+aws cloudformation deploy --stack-name container-demo --template-file ecs-ec2-spot-us-west-2.yaml --capabilities CAPABILITY_IAM
 ```
 
