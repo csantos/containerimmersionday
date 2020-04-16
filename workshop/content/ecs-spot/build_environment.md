@@ -32,3 +32,8 @@ wget https://resources.containerimmersionday.com/ecs-ec2-spot-us-west-2.yaml
 aws cloudformation deploy --stack-name container-demo --template-file ecs-ec2-spot-us-west-2.yaml --capabilities CAPABILITY_IAM
 ```
 
+The CloudFormation script will utilize EC2 Spot Instances in the environment buildout.
+
+When the [CloudFormation](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks?filteringText=container-demo&filteringStatus=active&viewNested=true&hideStacks=false&stackId=) execution completes, you can view your Spot Requests in the [EC2 Console](https://us-west-2.console.aws.amazon.com/ec2sp/v1/spot/home?region=us-west-2#)
+Monitor the progress of the CloudFormation
+
