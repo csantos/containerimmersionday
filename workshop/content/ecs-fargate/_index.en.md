@@ -1,7 +1,7 @@
 +++
 title = "Amazon ECS and AWS Fargate"
 date = 2019-10-28T11:39:31+11:00
-weight = 30
+weight = 3
 chapter = true
 +++
 
