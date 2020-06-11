@@ -6,7 +6,6 @@ weight: 10
 
 
 
-#### Prerequisites
 
 On your local laptop, complete the following items:
 
