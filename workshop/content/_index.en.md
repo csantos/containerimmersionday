@@ -9,7 +9,7 @@ weight: 1
 This site serves up a table of contents for today's workshop. Please come back to this page after you complete each exercise to know which module should be worked on next. If you are able to complete all 11 modules before the end of our session today, feel free to try out other modules.
 
 1. [EKS Workshop Prerequisites](https://www.eksworkshop.com/020_prerequisites/)
-1. [EKS Cluster Launch](https://www.eksworkshop.com/030_eksctl/launcheks/)
+1. [EKS Cluster Launch](https://www.eksworkshop.com/030_eksctl/)
 1. [Advanced VPC Networking](https://www.eksworkshop.com/beginner/160_advanced-networking/)
 1. [Logging with Elasticsearch, Fluentd, and Kibana (EFK)](https://eksworkshop.com/intermediate/230_logging/)
 1. [Service Mesh with Istio](https://eksworkshop.com/advanced/310_servicemesh_with_istio/)
