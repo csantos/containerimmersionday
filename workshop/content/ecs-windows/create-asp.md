@@ -19,13 +19,35 @@ Select the ‘MVC’ project template, make sure ‘Enable Docker support’ is 
 Examine the automatically-generated Dockerfile. It may look like this
 
 ```docker
-FROM microsoft/aspnet
+FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2019
 ARG source
 WORKDIR /inetpub/wwwroot
 COPY ${source:-obj/Docker/publish} .
 ```
 
+Replace it with the following content
 
+```docker
+#Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
+#For more information, please see https://aka.ms/containercompat 
+FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2019 AS base
+ARG source
 
-Build and run the project to ensure it starts up without error.
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8 AS build
+WORKDIR /app
+COPY . .
+RUN nuget restore -PackagesDirectory ../packages; msbuild /p:Configuration=Release /p:publishUrl=/out /p:DeleteExistingFiles=True /p:DeployOnBuild=True /p:DeployDefaultTarget=WebPublish /p:WebPublishMethod=FileSystem 
 
+# copy build artifacts into runtime image
+FROM base as final
+WORKDIR /inetpub/wwwroot
+COPY --from=build /out .
+```
+
+Next edit the `.dockerignore` file, removing the first line containing the '*' character. The resulting file should look like the below.
+
+![dockerignore-edited](/images/ecs-windows/dockerignore-edited.png)
+
+Build and run the project to ensure it starts up without error. This make take some time as the base Docker images must be downloaded.
+
+![visual-studio-new-asp](/images/ecs-windows/netfx-app-running.png)

@@ -15,9 +15,9 @@ Install [Microsoft Visual Studio 2019](https://visualstudio.microsoft.com/downlo
 
 Install [Docker Desktop for Windows](https://hub.docker.com/editions/community/docker-ce-desktop-windows/)
 
-Download the CloudFormation template
+Download the CloudFormation template. Open a PowerShell command prompt and execute the following command.
 
 
 ```
-wget https://raw.githubusercontent.com/trevorrobertsjr/ecs-service-automation/master/asp_ecs_service_deploy.yaml -outfile ecs.yaml
+wget https://raw.githubusercontent.com/trevorrobertsjr/ecs-service-automation/master/asp_ecs_service_deploy.yaml -outfile $HOME\Downloads\ecs.yaml
 ```

@@ -17,9 +17,22 @@ Select ‘EC2 Windows + Networking’ and click ‘Next Step’
 
 ![ecs-windows](/images/ecs-windows/ecs-windows.png)
 
-For Cluster name specify ‘ECS-ASPNET-Framework’, change EC2 Instance type to ‘m5.large’, and change ‘Number of instances’ to 3. Accept the remainder of the defaults and click ‘Create’.
+Provide the following details in the Create Cluster page:
 
-Wait several minutes while the ECS Cluster is being created. When all three boxes are green, record the following values for later use in Notepad or some other program:
+| Field |
+| -----               | ---- |
+| Cluster Name        | ECS-ASPNET-Framework |
+| EC2 Instance type   | m5.large |
+| Number of instances | 3 |
+| All other fields    | Keep defaults |
+
+![ecs-create-cluster](/images/ecs-windows/ecs-create-cluster.png)
+
+**Click ‘Create’**
+
+Wait several minutes while the ECS Cluster is being created. 
+
+When all three boxes are green, **record the following values for later use in Notepad or some other program**:
 
 | Parameters                                                             |
 | ---------------------------------------------------------------------- |
